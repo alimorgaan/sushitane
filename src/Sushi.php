@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 trait Sushi
 {
     protected static $sushiConnection;
+    protected static $currentRequestId;
 
     public function getRows()
     {
@@ -34,7 +35,29 @@ trait Sushi
 
     public static function resolveConnection($connection = null)
     {
+        $requestId = static::getCurrentRequestId();
+
+        // If request changed OR never booted, reset & boot
+        if (static::$currentRequestId !== $requestId || static::$sushiConnection === null) {
+            static::$currentRequestId = $requestId;
+            static::$sushiConnection = null;
+            static::bootSushi();
+        }
+
         return static::$sushiConnection;
+    }
+
+    protected static function getCurrentRequestId(): string
+    {
+        // Use request instance ID if available (Octane-aware)
+        if (function_exists('app') && app()->bound('request')) {
+            $request = app('request');
+            // Generate unique ID for this request instance
+            return spl_object_hash($request);
+        }
+
+        // Fallback: use request time + random (for non-Octane)
+        return (string) ($_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true));
     }
 
     protected function sushiCachePath()
