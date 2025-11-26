@@ -50,7 +50,6 @@ trait Sushi
 
     protected static function getCurrentRequestId(): string
     {
-        // Use request instance ID if available (Laravel apps)
         if (function_exists('app') && app()->bound('request')) {
             $request = app('request');
             return spl_object_hash($request);
