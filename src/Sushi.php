@@ -12,6 +12,7 @@ trait Sushi
 {
     protected static $sushiConnection;
     protected static $currentRequestId;
+    protected static $fallbackRequestId;
 
     public function getRows()
     {
@@ -49,15 +50,17 @@ trait Sushi
 
     protected static function getCurrentRequestId(): string
     {
-        // Use request instance ID if available (Octane-aware)
+        // Use request instance ID if available (Laravel apps)
         if (function_exists('app') && app()->bound('request')) {
             $request = app('request');
-            // Generate unique ID for this request instance
             return spl_object_hash($request);
         }
 
-        // Fallback: use request time + random (for non-Octane)
-        return (string) ($_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true));
+        if (static::$fallbackRequestId === null) {
+            static::$fallbackRequestId = (string) ($_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true));
+        }
+
+        return static::$fallbackRequestId;
     }
 
     protected function sushiCachePath()
@@ -80,6 +83,9 @@ trait Sushi
 
     public static function bootSushi()
     {
+        // Set current request ID to prevent re-booting during migration
+        static::$currentRequestId = static::getCurrentRequestId();
+
         $instance = (new static);
 
         $cachePath = $instance->sushiCachePath();
