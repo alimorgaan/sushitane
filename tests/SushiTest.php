@@ -108,7 +108,7 @@ class SushiTest extends TestCase
 
         $this->assertTrue(file_exists($this->cachePath));
         $this->assertStringContainsString(
-            'sushi/tests/cache/sushi-tests-foo.sqlite',
+            'tests/cache/sushi-tests-foo.sqlite',
             str_replace('\\', '/', (new Foo())->getConnection()->getDatabaseName())
         );
     }
